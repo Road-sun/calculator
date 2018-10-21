@@ -164,16 +164,16 @@
                         let tail=eobj.lastIndexOf(')');
                         let head=eobj.indexOf('(');
 
-                        if(tail!=-1){
-                            let newzhan=eobj.slice(head+1,tail);
+                        if(tail!=-1) {
+                            let newzhan = eobj.slice(head + 1, tail);
+                            emptyArray.pop();
+                            eobj.splice(head + 1, tail - head);
                             console.log(newzhan);
-                            let bracketNum=[];
-                            this.zhanSS(newzhan,bracketNum);
-                            console.log('bracketNum='+bracketNum[0]);
+                            let bracketNum = [];
+                            this.zhanSS(newzhan, bracketNum);
+                            console.log('bracketNum=' + bracketNum[0]);
                             emptyArray.push(bracketNum[0]);
                         }
-                        this.itemRemove(emptyArray,'(');
-                        this.itemRemove(emptyArray,')');
                   }
 
                   console.log(emptyArray);
@@ -186,18 +186,20 @@
                       emptyArray.push(num);
                   }
               }
-
+              let lastRes=[];
+              console.log(emptyArray);
               for(let j=0;j<emptyArray.length;j++){
                   //计算加减法
-                  if(emptyArray[j]=='+'||emptyArray[j]=='-'){
-                      let oper=emptyArray.splice(j-1,3);
+                  lastRes.push(emptyArray[j]);
+                  if(emptyArray[j-1]=='+'||emptyArray[j-1]=='-'){
+                      let oper=lastRes.splice(lastRes.length-3,3);
                       let num=this.addmin(oper[0],oper[2],oper[1]);
-                      emptyArray.push(num);
+                      lastRes.push(num);
                   }
               }
-              this.itemRemove(emptyArray,'=');
-
-
+              console.log(lastRes);
+              emptyArray.splice(0,emptyArray.length,lastRes[0]);
+                
             },
 
             //乘除法运算
