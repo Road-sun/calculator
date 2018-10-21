@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        [v-cloak]{
+            display:none
+        }
+        .screen{
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          width: 500px;
+          height: 80px;
+          font-size: 25px;
+          border:2px solid black ;
+        }
+        .context{
+            height: 0;
+            flex-grow: 1;
+        }
+        .res{
+            height: 0;
+            flex-grow: 1;
+            text-align: right;
+        }
+        .bt-area{
+          display: flex;
+          flex-direction: column;
+          border:2px solid black ;
+          width: 500px;
+          height: 500px;
+          margin-top: 30px;
+        }
+        .cus-bt{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            width: 123px;
+            height: 60px;
+            border: 1px solid red;
+        }
+        .first-bt-area{
+            display: flex;
+            width: 100%;
+        }
+        .second-bt-area{
+            display: flex;
+            width: 100%;
+        }
+        .number-bt{
+            display: flex;
+            width: 0;
+            height: 100%;
+            flex-wrap: wrap;
+            flex-grow: 3;
+        }
+        .symbol-bt{
+            display: flex;
+            flex-wrap: wrap;
+            width: 0;
+            flex-grow: 1;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="app" v-cloak>
+    <div class="screen">
+        <div class="context">{{context}}</div>
+        <div class="res">{{res}}</div>
+    </div>
+
+    <div class="bt-area">
+        <div class="first-bt-area">
+            <div class="cus-bt" v-for="item in symbol2" @click="cal(item)">{{item}}</div>
+        </div>
+        <div class="second-bt-area">
+            <div class="number-bt">
+                <div class="cus-bt" v-for="item in number" @click="cal(item)">{{item}}</div>
+            </div>
+            <div class="symbol-bt">
+                <div class="cus-bt" v-for="item in symbol" @click="cal(item)">{{item}}</div>
+            </div>
+        </div>
+        <div></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return{
+                context:'',
+                number:[7,8,9,4,5,6,1,2,3,0,'.','='],
+                symbol:['÷','×','-','+'],
+                symbol2:['(',')','%','C'],
+                res:0,
+                contextArray:[],
+                calArray:[],
+                resArray:[]
+            }
+        },
+        methods:{
+            cal:function (res) {
+                this.showCal(res);
+                this.calRes(res);
+            },
+            showCal:function (res) {
+                if(res!='C'){
+                    let sys=''+res;
+                    app.context=app.context+sys;
+                    app.contextArray.push(sys);
+                }else {
+                    this.clearScreen();
+                }
+            },
+            calRes:function (res) {
+                if(res=='='){
+                    let sysArray=app.contextArray;
+                    let pre='';
+                    let cal=[];
+                    for(let i=0;i<sysArray.length;i++){
+                        if(!isNaN(parseInt(sysArray[i]))||(sysArray[i]=='.')){
+                            pre+=sysArray[i];
+                        }else {
+                            if(pre!=''){
+                                let preNum=Number(pre);
+                                cal.push(preNum,sysArray[i]);
+                                pre='';
+                            }else {
+                                cal.push(sysArray[i]);
+                            }
+
+                        }
+                    }
+                    app.calArray=cal;
+                    let res1=[];
+                    this.zhanSS(cal,res1);
+                    app.resArray=res1;
+                    app.res=res1[0];
+                }
+            },
+            clearScreen:function () {
+              app.context='';
+              app.res=0;
+              app.contextArray=[];
+              app.calArray=[];
+              app.resArray=[];
+            },
+
+            //栈运算
+            zhanSS:function (eobj,emptyArray) {
+              console.log(eobj);
+              for(let i=0;i<eobj.length;i++){
+                  emptyArray.push(eobj[i]);
+
+                  if(eobj[i]=='('){
+                        //如果有括号（多重括号），递归求括号里的解
+                        let tail=eobj.lastIndexOf(')');
+                        let head=eobj.indexOf('(');
+
+                        if(tail!=-1){
+                            let newzhan=eobj.slice(head+1,tail);
+                            console.log(newzhan);
+                            let bracketNum=[];
+                            this.zhanSS(newzhan,bracketNum);
+                            console.log('bracketNum='+bracketNum[0]);
+                            emptyArray.push(bracketNum[0]);
+                        }
+                        this.itemRemove(emptyArray,'(');
+                        this.itemRemove(emptyArray,')');
+                  }
+
+                  console.log(emptyArray);
+
+
+                  //计算乘除取余
+                  if(eobj[i-1]=='×'||eobj[i-1]=='÷'||eobj[i-1]=='%'){
+                      let oper=emptyArray.splice(emptyArray.length-3,3);
+                      let num=this.muldiv(oper[0],oper[2],oper[1]);
+                      emptyArray.push(num);
+                  }
+              }
+
+              for(let j=0;j<emptyArray.length;j++){
+                  //计算加减法
+                  if(emptyArray[j]=='+'||emptyArray[j]=='-'){
+                      let oper=emptyArray.splice(j-1,3);
+                      let num=this.addmin(oper[0],oper[2],oper[1]);
+                      emptyArray.push(num);
+                  }
+              }
+              this.itemRemove(emptyArray,'=');
+
+
+            },
+
+            //乘除法运算
+            muldiv:function (pre,next,res) {
+                let yzFloat=/^(-?\d+)(\.\d+)?$/;
+                if(yzFloat.test(pre)||yzFloat.test(next)){
+                    if(res=='×'){
+                        return this.calFloat(pre*next);
+                    }
+                    if(res=='÷'){
+                        return this.calFloat(pre/next);
+                    }
+                    if(res=='%'){
+                        return this.calFloat(pre%next);
+                    }
+                }else {
+                    if(res=='×'){
+                        return pre*next;
+                    }
+                    if(res=='÷'){
+                        return pre/next;
+                    }
+                    if(res=='%'){
+                        return pre%next;
+                    }
+                }
+
+            },
+            //加减法运算
+            addmin:function (pre,next,res) {
+                let yzFloat=/^(-?\d+)(\.\d+)?$/;
+                if(yzFloat.test(pre)||yzFloat.test(next)){
+                    if(res=='+'){
+                        return this.calFloat(pre+next)
+                    }else {
+                        return this.calFloat(pre-next);
+                    }
+                }else {
+                    if(res=='+'){
+                        return pre+next
+                    }else {
+                        return pre-next;
+                    }
+                }
+
+            },
+            //浮点数误差解决
+            calFloat:function (f) {
+                let m=Math.pow(10,20);
+                return Math.round(f*m,10)/m;
+            },
+            //从数组中移除指定字符串
+            itemRemove:function (array,str) {
+                if(array.indexOf(str)!=-1){
+                    array.splice(array.indexOf(str),1);
+                }
+
+            }
+        }
+    })
+</script>
+</body>
+</html>
