@@ -112,9 +112,26 @@
             },
             showCal:function (res) {
                 if(res!='C'){
-                    let sys=''+res;
-                    app.context=app.context+sys;
-                    app.contextArray.push(sys);
+                    if(app.resArray.length==0){
+                        let sys=''+res;
+                        app.context=app.context+sys;
+                        app.contextArray.push(sys);
+                    }else {
+                        let getUpRes = app.res;
+                        this.clearScreen();
+                        let sys = '' + res;
+                        app.context = app.context + sys;
+                        app.contextArray.push(sys);
+                        console.log(app.contextArray[0]);
+                        if (isNaN(parseInt(app.contextArray[0]))) {
+                            console.log('success');
+                            let oup=''+getUpRes;
+                            app.contextArray.unshift(oup);
+                            app.context = oup + app.context;
+                        }
+
+                    }
+
                 }else {
                     this.clearScreen();
                 }
@@ -198,8 +215,13 @@
                   }
               }
               console.log(lastRes);
-              emptyArray.splice(0,emptyArray.length,lastRes[0]);
-                
+
+              if(lastRes.length>2){
+                  emptyArray.splice(0,emptyArray.length,NaN);
+              }else {
+                  emptyArray.splice(0,emptyArray.length,lastRes[0]);
+              }
+
             },
 
             //乘除法运算
