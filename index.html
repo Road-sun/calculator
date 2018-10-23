@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>简易计算器</title>
     <style>
         [v-cloak]{
             display:none
@@ -79,10 +79,10 @@
         </div>
         <div class="second-bt-area">
             <div class="number-bt">
-                <div class="cus-bt" v-for="item in number" @click="cal(item)">{{item}}</div>
+                <div class="cus-bt"  v-for="item in number" @click="cal(item)">{{item}}</div>
             </div>
             <div class="symbol-bt">
-                <div class="cus-bt" v-for="item in symbol" @click="cal(item)">{{item}}</div>
+                <div class="cus-bt" style="height: 47.6px" v-for="item in symbol" @click="cal(item)">{{item}}</div>
             </div>
         </div>
         <div></div>
@@ -97,7 +97,7 @@
             return{
                 context:'',
                 number:[7,8,9,4,5,6,1,2,3,0,'.','='],
-                symbol:['÷','×','-','+'],
+                symbol:['Esc','÷','×','-','+'],
                 symbol2:['(',')','%','C'],
                 res:0,
                 contextArray:[],
@@ -112,23 +112,30 @@
             },
             showCal:function (res) {
                 if(res!='C'){
-                    if(app.resArray.length==0){
-                        let sys=''+res;
-                        app.context=app.context+sys;
-                        app.contextArray.push(sys);
-                    }else {
-                        let getUpRes = app.res;
-                        this.clearScreen();
-                        let sys = '' + res;
-                        app.context = app.context + sys;
-                        app.contextArray.push(sys);
-                        console.log(app.contextArray[0]);
-                        if (isNaN(parseInt(app.contextArray[0]))) {
-                            console.log('success');
-                            let oup=''+getUpRes;
-                            app.contextArray.unshift(oup);
-                            app.context = oup + app.context;
+                    if(res!='Esc'){
+                        if(app.resArray.length==0){
+                            let sys=''+res;
+                            app.context=app.context+sys;
+                            app.contextArray.push(sys);
+                        }else {
+                            let getUpRes = app.res;
+                            this.clearScreen();
+                            let sys = '' + res;
+                            app.context = app.context + sys;
+                            app.contextArray.push(sys);
+                            console.log(app.contextArray[0]);
+                            if (isNaN(parseInt(app.contextArray[0]))) {
+                                console.log('success');
+                                let oup=''+getUpRes;
+                                app.contextArray.unshift(oup);
+                                app.context = oup + app.context;
+                            }
+
                         }
+                    }else {
+                        let last=app.contextArray.pop();
+                        let lalen=last.length;
+                        app.context=app.context.substring(0,app.context.length-lalen);
 
                     }
 
@@ -270,8 +277,10 @@
             },
             //浮点数误差解决
             calFloat:function (f) {
-                let m=Math.pow(10,20);
-                return Math.round(f*m,10)/m;
+                let m=Math.pow(10,10);
+                console.log(Math.round(f*m,10));
+                return parseInt(f*m,10)/m;
+
             },
             //从数组中移除指定字符串
             itemRemove:function (array,str) {
