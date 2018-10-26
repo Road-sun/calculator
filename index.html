@@ -211,14 +211,26 @@
                   }
               }
               let lastRes=[];
+
               console.log(emptyArray);
+
               for(let j=0;j<emptyArray.length;j++){
                   //计算加减法
                   lastRes.push(emptyArray[j]);
                   if(emptyArray[j-1]=='+'||emptyArray[j-1]=='-'){
-                      let oper=lastRes.splice(lastRes.length-3,3);
-                      let num=this.addmin(oper[0],oper[2],oper[1]);
-                      lastRes.push(num);
+                      console.log(lastRes);
+                      if(lastRes.length==2){
+                          //负数运算，判断该式子是否只有两位
+                          let oper=lastRes.splice(lastRes.length-2,2);
+                          let num=Number(oper[0]+oper[1]);
+                          lastRes.push(num);
+                      }else {
+                          let oper=lastRes.splice(lastRes.length-3,3);
+                          console.log(oper);
+                          let num=this.addmin(oper[0],oper[2],oper[1]);
+                          lastRes.push(num);
+                      }
+
                   }
               }
               console.log(lastRes);
