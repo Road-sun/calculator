@@ -106,35 +106,26 @@
             }
         },
         methods:{
-            //计算总函数
             cal:function (res) {
-                //屏幕展示计算式
                 this.showCal(res);
                 this.calRes(res);
             },
-            //屏幕展示函数，
             showCal:function (res) {
-                //判断按键是否为清屏
                 if(res!='C'){
-                    //判断是否为退格
                     if(res!='Esc'){
-                        //判断是否可以连续运算，(即判断是否存在上次计算结果）
                         if(app.resArray.length==0){
-                            //不存在，将输入值变为字符串，记录到context(显示屏上），添加到contextArray(过程数组中)
                             let sys=''+res;
                             app.context=app.context+sys;
                             app.contextArray.push(sys);
                         }else {
-                            //存在，记录上次计算结果，清屏，将上次计算结果记录到数组与显示屏上
                             let getUpRes = app.res;
                             this.clearScreen();
                             let sys = '' + res;
                             app.context = app.context + sys;
                             app.contextArray.push(sys);
-//                            console.log(app.contextArray[0]);
-                            //排断新一次计算输入的是数字还是运算符，若是运算符则与记录上次结果，若是数字则与上次结果无关了，无需记录进行新一次运算
+                            console.log(app.contextArray[0]);
                             if (isNaN(parseInt(app.contextArray[0]))) {
-//                                console.log('success');
+                                console.log('success');
                                 let oup=''+getUpRes;
                                 app.contextArray.unshift(oup);
                                 app.context = oup + app.context;
@@ -142,7 +133,6 @@
 
                         }
                     }else {
-                        //按键是退格，过程数组中除去该项，清除上次输入字符，
                         let last=app.contextArray.pop();
                         let lalen=last.length;
                         app.context=app.context.substring(0,app.context.length-lalen);
@@ -150,48 +140,35 @@
                     }
 
                 }else {
-                    //调用清屏函数
                     this.clearScreen();
                 }
             },
-
-            //将过程数组中字符串变成数字，并进行调用栈运算
             calRes:function (res) {
-                //如果出现等号，开始进行计算
                 if(res=='='){
                     let sysArray=app.contextArray;
                     let pre='';
-                    let process=[];
-                    //String变Number
+                    let cal=[];
                     for(let i=0;i<sysArray.length;i++){
-                        //循坏判断是数字还是运算符
                         if(!isNaN(parseInt(sysArray[i]))||(sysArray[i]=='.')){
-                            //输入的连续的个位数，小数，合并成真正的计算数字
                             pre+=sysArray[i];
                         }else {
-                            //直到下一项不为数字(即该数到此),则使用Number将其变成Number,存入新的过程数组
                             if(pre!=''){
                                 let preNum=Number(pre);
-                                process.push(preNum,sysArray[i]);
+                                cal.push(preNum,sysArray[i]);
                                 pre='';
                             }else {
-                                //运算符直接存入过程数组
-                                process.push(sysArray[i]);
+                                cal.push(sysArray[i]);
                             }
 
                         }
                     }
-                    //记录最后的过程数组
-                    app.calArray=process;
-                    //调用栈运算
-                    let res=this.stackRun(process);
-                    //得到计算结果
-                    app.resArray.push(res);
-                    app.res=res;
+                    app.calArray=cal;
+                    let res1=[];
+                    this.zhanSS(cal,res1);
+                    app.resArray=res1;
+                    app.res=res1[0];
                 }
             },
-
-            //清屏函数，初始化
             clearScreen:function () {
               app.context='';
               app.res=0;
@@ -201,141 +178,99 @@
             },
 
             //栈运算
-            stackRun:function (eobj) {
-//              console.log(eobj);
-              let process=eobj;
-              //创建结果栈
-              let resultStack=[];
+            zhanSS:function (eobj,emptyArray) {
+              console.log(eobj);
+              for(let i=0;i<eobj.length;i++){
+                  emptyArray.push(eobj[i]);
 
-//              console.log('开始进行括号内运算');
-              for(let i=0;i<process.length;i++){
-                  //依次推入结果栈
-                  resultStack.push(process[i]);
+                  if(eobj[i]=='('){
 
-                  if(process[i]==')'){
-                    //判断是否有右括号
-                    //tail为右括号在结果栈中的位置+1，head为左括号
-                    // 因为结果栈依次记录，遇到右括号时，其位置当然是该数组最后一位
-                    // 而与其对应的左括号则为从后往前查找的第一个左括号
-                    let head=resultStack.lastIndexOf('(');
-                    let tail=resultStack.length;
+                        //如果有括号（多重括号），递归求括号里的解
+                        let tail=eobj.lastIndexOf(')');
+                        let head=eobj.indexOf('(');
 
-                    // 删除结果栈中括号里的内容(包含括号),并返回子栈(即删去的这几项)
-                    let childStack=resultStack.splice(head,tail-head);
-
-//                    console.log(childStack);
-                    //去掉子栈头尾的括号
-                    childStack.pop();
-                    childStack.shift();
-//                    console.log(childStack);
-                    //递归计算子栈
-                    let childStackRes=this.stackRun(childStack);
-
-                    //将计算结构推入结果栈
-                    resultStack.push(childStackRes);
+                        if(tail!=-1) {
+                            let newzhan = eobj.slice(head + 1, tail);
+                            emptyArray.pop();
+                            eobj.splice(head + 1, tail - head);
+                            console.log(newzhan);
+                            let bracketNum = [];
+                            this.zhanSS(newzhan, bracketNum);
+                            console.log('bracketNum=' + bracketNum[0]);
+                            emptyArray.push(bracketNum[0]);
+                        }
                   }
-//                  console.log(resultStack);
 
-              }
-
-              //到此栈中已无括号运算，将结果栈作为过程数组进行下面计算，并清空结果栈
-              process=resultStack.slice(0);
-//              console.log(process);
-              resultStack=[];
+                  console.log(emptyArray);
 
 
-              //计算乘除取余
-//              console.log('开始进行乘除运算');
-              for(let i=0;i<process.length;i++){
-                  //同上，依次推入结果栈
-                  resultStack.push(process[i]);
-//                  console.log(resultStack);
-                  if(process[i-1]=='×'||process[i-1]=='÷'||process[i-1]=='%'){
-                      //判断前一项是否是运算符
-                      //如果是，则遇到运算，获取结果栈中最后三项，并删除(即为需要进行计算的三项（乘数，运算符，被乘数）
-                      let l=resultStack.length;
-//                      console.log(l);
-                      let oper=resultStack.splice(l-3,3);
-//                      console.log(oper);
-                      //调用计算函数
+                  //计算乘除取余
+                  if(eobj[i-1]=='×'||eobj[i-1]=='÷'||eobj[i-1]=='%'){
+                      let oper=emptyArray.splice(emptyArray.length-3,3);
                       let num=this.simplecal(oper[0],oper[2],oper[1]);
-                      //将结果推入栈中
-                      resultStack.push(num);
-//                      console.log(resultStack);
-
+                      emptyArray.push(num);
                   }
               }
+              let lastRes=[];
 
-              //到此栈中只剩加法运算，之所以需要分布进行，是因为优先级的关系
-              process=resultStack.slice(0);
-//              console.log(process);
-              resultStack=[];
+              console.log(emptyArray);
 
-              //计算加减法
-//              console.log('开始进行加减运算');
-              for(let i=0;i<process.length;i++){
-                  //同理
-                  resultStack.push(process[i]);
-                  if(process[i-1]=='+'||process[i-1]=='-'){
-                      let l=resultStack.length;
-//                      console.log(l);
-                      //此处判断是为了解决负数运算，如果只有两位就遇到了运算符，则证明该运算符其实是决定该数的正负性
-                      if(l==2){
-                          let oper=resultStack.splice(l-2,2);
+              for(let j=0;j<emptyArray.length;j++){
+                  //计算加减法
+                  lastRes.push(emptyArray[j]);
+                  if(emptyArray[j-1]=='+'||emptyArray[j-1]=='-'){
+                      console.log(lastRes);
+                      if(lastRes.length==2){
+                          //负数运算，判断该式子是否只有两位
+                          let oper=lastRes.splice(lastRes.length-2,2);
                           let num;
-                          //因为Number支持转化（-1）不支持转化-（-1），所以还需手动排队一下
                           if(oper[1]<0){
                               num=-oper[1];
                           }else {
                               num=Number(oper[0]+oper[1]);
                           }
-                          resultStack.push(num);
+                          lastRes.push(num);
+
                       }else {
-                          let oper=resultStack.splice(l-3,3);
-//                          console.log(oper);
+                          let oper=lastRes.splice(lastRes.length-3,3);
+                          console.log(oper);
                           let num=this.simplecal(oper[0],oper[2],oper[1]);
-                          resultStack.push(num);
-//                          console.log(process);
-//                          console.log(resultStack);
+                          lastRes.push(num);
                       }
 
                   }
               }
+              console.log(lastRes);
 
-//              console.log(resultStack);
-              //返回结果
-              return resultStack[0];
+              if(lastRes.length>2){
+                  emptyArray.splice(0,emptyArray.length,NaN);
+              }else {
+                  emptyArray.splice(0,emptyArray.length,lastRes[0]);
+              }
 
             },
 
             //乘除加减取余运算
             simplecal:function (pre,next,res) {
-
-                //判断是否为浮点数计算
-                if(this.judgeFloat(pre)||this.judgeFloat(next)){
-//                    console.log('有浮点数');
+                let yzFloat=/(^(-?\\d+)(\\.\\d+)?$)/;
+                if(yzFloat.test(pre)||yzFloat.test(next)){
                     let m1=this.calFloat(pre);
                     let m2=this.calFloat(next);
                     if(res=='×'){
-//                        console.log(pre+'*'+m1+'*'+next+'*'+m2);
-                        //浮点数变成整数再进行运算
                         return (pre*m1*next*m2)/(m1*m2) ;
                     }
                     if(res=='÷'){
                         if(m1>m2){
-                            //乘以较大的值保证每个数都变成整数
                             return (pre*m1)/(next*m1)
                         }else {
                             return (pre*m2)/(next*m2)
                         }
                     }
                     if(res=='%'){
-                            //暂无头绪
                         return pre%next;
                     }
                     if(res=='+') {
                         if(m1>m2){
-                            //乘以较大的值保证每个数都变成整数
                             return (pre*m1 + next*m1)/m1
                         }else {
                             return (pre*m2 + next*m2)/m2
@@ -344,14 +279,12 @@
                     }
                     if(res=='-'){
                         if(m1>m2){
-                            //乘以较大的值保证每个数都变成整数
                             return (pre*m1 - next*m1)/m1
                         }else {
                             return (pre*m2 - next*m2)/m2
                         }
                     }
                 }else {
-//                    console.log('无浮点数');
                     if(res=='×'){
                         return pre*next;
                     }
@@ -372,36 +305,21 @@
             },
 
             //浮点数误差解决
-            //l:小数点后有几位 m:10的l次方
-            //利用是否有.来判断是否是浮点数
             calFloat:function (f) {
-                let str=f+'';
+                let str=f;
+                let yzFloat=/(^(-?\\d+)(\\.\\d+)?$)/;
 
-                if(!this.judgeFloat(f)){
-//                    console.log(f+':z');
+                if(yzFloat.test(str)){
+                    console.log(f+':z');
                     return 1;
                 }else {
-                    let l=str.split('.')[1].length;
-                    let m=Math.pow(10,l);
-//                    console.log(f+':f');
+                    let m=Math.pow(10,str.toString().split('.').length);
+                    console.log(f+':f');
                     return m;
                 }
 
 
             },
-
-            //判断一个数是否是浮点数
-            judgeFloat:function (e) {
-
-                let str=e+'';
-                if(str.indexOf('.')==-1){
-                    return false;
-                }else {
-                    return true;
-                }
-            },
-
-
             //从数组中移除指定字符串
             itemRemove:function (array,str) {
                 if(array.indexOf(str)!=-1){
